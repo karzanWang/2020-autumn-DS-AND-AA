@@ -1,5 +1,7 @@
 package lab_four;
 
+import com.sun.source.tree.Tree;
+
 import java.util.*;
 
 class EmptyBSTException extends Exception {
@@ -26,6 +28,7 @@ class NoSuchKeyException extends Exception {
  */
 public class BinarySearchTree {
     private TreeNode root = null;
+    public TreeNode current = null;
     private int size = 0;
 
     /**
@@ -42,6 +45,9 @@ public class BinarySearchTree {
      * @throws DuplicateKeyException should not have duplicate keys
      */
     public BinarySearchTree(int[] array) throws DuplicateKeyException {
+        for(int i=0;i<array.length;i++){
+            insert(array[i]);
+        }
 
     }
 
@@ -52,6 +58,9 @@ public class BinarySearchTree {
      * @throws DuplicateKeyException should not have duplicate keys
      */
     public BinarySearchTree(Integer[] array) throws DuplicateKeyException {
+        for(int i=0;i<array.length;i++){
+            insert(array[i]);
+        }
 
     }
 
@@ -62,6 +71,19 @@ public class BinarySearchTree {
      * @return yes or no
      */
     public boolean hasKey(int key) {
+        TreeNode current = root;
+        while (current != null) {
+            //小于当前节点元素遍历其左子树
+            if (key<current.val) {
+                current = current.left;
+                //大于当前节点元素遍历其右子树
+            } else if (key>current.val) {
+                current = current.right;
+            } else {
+                //查到
+                return true;
+            }
+        }
         return false;
     }
 
@@ -72,8 +94,39 @@ public class BinarySearchTree {
      * @throws DuplicateKeyException have no duplicate key
      */
     public void insert(int x) throws DuplicateKeyException {
-        
+        if(root == null){		//为空树
+            root =new TreeNode(x);
+            size++;
+        }
+        else{
+            current = root;
+            while(current != null){   //寻找叶子节点
+                if(x == current.val){
+                    throw new DuplicateKeyException("insert失败：key重复");
+                }
+                if(x < current.val){
+                    if(current.left == null){
+                        current.left = new TreeNode(x);
+                        size++;
+                        break;
+                    }
+                    current = current.left;
+
+                }
+                else{
+                    if(current.right == null){
+                        current.right = new TreeNode(x);
+                        size++;
+                        break;
+                    }
+                    current = current.right;
+                }
+            }
+        }
+
     }
+
+
 
     /**
      * todo: remove an item
@@ -83,8 +136,43 @@ public class BinarySearchTree {
      * @throws NoSuchKeyException item not found
      */
     public void remove(int x) throws EmptyBSTException, NoSuchKeyException {
-        
+        if (size == 0){
+            throw new EmptyBSTException("remove失败");
+        }
+        if(!hasKey(x)){
+            throw new NoSuchKeyException("remove失败");
+        }
+        remove(x,root);
+        size--;
     }
+
+
+    private TreeNode remove (int x, TreeNode node){
+        if (null == node) return null;
+        if (x<node.val)
+            node.left = remove(x, node.left);
+        else if (x> node.val)
+        node.right = remove(x, node.right);
+	    else{
+            if (null == node.left)  		node = node.right;
+            else if (null == node.right)	node = node.left;
+            else {
+                node.val = findMin(node.right).val;
+                node.right = remove(node.val, node.right);
+            }
+        }
+        return node;
+    }
+
+    // 找到以node为根节点的所有节点中值最小的节点，也就是最左端的节点
+    private TreeNode findMin(TreeNode node) {
+        while (node.left != null) {
+            node = node.left;
+        }
+        return node;
+    }
+
+
 
     /**
      * todo: preorder traversal
@@ -93,11 +181,41 @@ public class BinarySearchTree {
      * @return sequence of traversal
      */
     public List<Integer> preorder(boolean recur) {
+        List<Integer> integerList = new ArrayList<>();
         if (recur) {
-            return null;
+            return preOrderPrintTree(root,integerList);
         } else {
-            return null;
+            return preorder(root);
         }
+    }
+
+    //前序遍历数
+    private List<Integer> preOrderPrintTree(TreeNode node,List<Integer> integerList){
+        if(node == null)
+            return integerList;
+        integerList.add(node.val);
+        preOrderPrintTree(node.left,integerList);
+        preOrderPrintTree(node.right,integerList);
+        return integerList;
+    }
+
+
+    private List<Integer> preorder(TreeNode node) {
+        ArrayList<Integer> resultList = new ArrayList<Integer>();
+        if (root == null)
+            return resultList;
+        Stack<TreeNode> stack = new Stack<TreeNode>();
+        stack.push(root);
+        while (!stack.isEmpty()) {
+            TreeNode temp = stack.pop();
+            resultList.add(temp.val);
+            if (temp.right != null)
+                stack.push(temp.right);
+            if (temp.left != null)
+                stack.push(temp.left);
+        }
+        return resultList;
+
     }
 
 
@@ -108,11 +226,45 @@ public class BinarySearchTree {
      * @return sequence
      */
     public List<Integer> inorder(boolean recur) {
+        List<Integer> integerList = new ArrayList<>();
         if (recur) {
-            return null;
+            return inOrderPrintTree(root,integerList);
         } else {
-            return null;
+            return inorder(root);
         }
+    }
+
+    //中序遍历数
+    private List<Integer> inOrderPrintTree(TreeNode node,List<Integer> integerList){
+        if(node == null)
+            return integerList;
+        inOrderPrintTree(node.left,integerList);
+        integerList.add(node.val);
+        inOrderPrintTree(node.right,integerList);
+        return integerList;
+    }
+
+    private List<Integer> inorder (TreeNode node){
+        ArrayList<Integer> result = new ArrayList<Integer>();
+        Stack<TreeNode> s = new Stack<TreeNode>();
+        boolean done = false;
+        TreeNode current = root;
+        while (!done) {
+            if (current != null) {
+                s.push(current);
+                current = current.left;
+            } else {
+                if (s.isEmpty())
+                    done = true;
+                else {
+                    TreeNode temp = s.pop();
+                    result.add(temp.val);
+                    current = temp.right;
+                }
+            }
+        }
+
+        return result;
     }
 
     /**
@@ -122,11 +274,63 @@ public class BinarySearchTree {
      * @return sequence
      */
     public List<Integer> postorder(boolean recur) {
+        List<Integer> integerList = new ArrayList<>();
         if (recur) {
-            return null;
+            return postOrderPrintTree(root,integerList);
         } else {
-            return null;
+            return postOrder(root);
         }
+    }
+
+    //后序遍历数
+    private List<Integer> postOrderPrintTree(TreeNode node,List<Integer> integerList){
+        if(node == null)
+            return integerList;
+        postOrderPrintTree(node.left,integerList);
+        postOrderPrintTree(node.right,integerList);
+        integerList.add(node.val);
+        return integerList;
+    }
+
+    private List<Integer> postOrder(TreeNode node){
+        List<Integer> result = new ArrayList<Integer>();
+        if (root == null)
+            return result;
+        Stack<TreeNode> stack = new Stack<TreeNode>();
+        stack.push(root);
+        TreeNode prev = null;
+        TreeNode curr;
+        while (!stack.isEmpty()) {
+            curr = stack.peek();
+            // we are traversing down the tree
+            if (prev == null || prev.left == curr || prev.right == curr) {
+                if (curr.left != null)
+                    stack.push(curr.left);
+                else if (curr.right != null)
+                    stack.push(curr.right);
+                else {
+                    result.add(curr.val);
+                    stack.pop();
+                }
+                // we are traversing up the tree from the left
+            } else if (curr.left == prev) {
+                if (curr.right != null)
+                    stack.push(curr.right);
+                else {
+                    result.add(curr.val);
+                    stack.pop();
+                }
+                // we are traversing up the tree from the right
+            } else if (curr.right == prev) {
+                result.add(curr.val);
+                stack.pop();
+            }
+            // record previously traversed node
+            prev = curr;
+        }
+        return result;
+
+
     }
 
     /**
@@ -136,8 +340,24 @@ public class BinarySearchTree {
      * @return sequence
      */
     public List<Integer> levelOrder() {
-        
-        return null;
+        List<Integer> result = new LinkedList<>();
+        if(root==null){
+            return result;
+        }
+        Queue<TreeNode> qu=new LinkedList<>();
+        qu.add(root);
+        while (!qu.isEmpty()){
+            root=qu.peek();
+            qu.poll();
+            result.add(root.val);
+            if(root.left!=null){
+                qu.add(root.left);
+            }
+            if(root.right!=null){
+                qu.add(root.right);
+            }
+        }
+        return result;
     }
 
     /**
@@ -263,9 +483,24 @@ public class BinarySearchTree {
      * @return kth smallest
      * @throws EmptyBSTException may be empty
      */
+
     public int kthSmallest(int k) throws EmptyBSTException {
-        return 0;
+        if (size == 0)
+            throw new EmptyBSTException("BST is empty");
+        Stack<TreeNode> s = new Stack<>();
+        TreeNode node =  root;
+        while(node!=null || !s.isEmpty()) {
+            while(node!=null) {
+                s.push(node);
+                node = node.left;
+            }
+            node = s.pop();
+            if(--k == 0) break;
+            node = node.right;
+        }
+        return node.val;
     }
+
 
 
     /**
@@ -274,7 +509,16 @@ public class BinarySearchTree {
      * @return depth of BST
      */
     public int depth() {
-        return 0;
+        return height(root);
+    }
+    public int height(TreeNode node){
+        if(node==null){
+            return 0;
+        }else{
+            int i=height(node.left);
+            int j=height(node.right);
+            return (i<j)?(j+1):(i+1);
+        }
     }
 
 
@@ -285,7 +529,66 @@ public class BinarySearchTree {
      * @return closest value
      */
     public int closestSmall(double target) throws EmptyBSTException {
-        return 0;
+        if (size == 0)
+            throw new EmptyBSTException("BST is empty");
+        if (root == null) {
+            return 0;
+        }
+
+        TreeNode lowerNode = lowerBound(root, target);
+        TreeNode upperNode = upperBound(root, target);
+
+        if (lowerNode == null) {
+            return upperNode.val;
+        }
+
+        if (upperNode == null) {
+            return lowerNode.val;
+        }
+
+        if (target - lowerNode.val > upperNode.val - target) {
+            return upperNode.val;
+        }
+
+        return lowerNode.val;
+    }
+
+    // find the node with the largest value that smaller than target
+    private TreeNode lowerBound(TreeNode root, double target) {
+        if (root == null) {
+            return null;
+        }
+
+        if (target <= root.val) {
+            return lowerBound(root.left, target);
+        }
+
+        // root.val < target
+        TreeNode lowerNode = lowerBound(root.right, target);
+        if (lowerNode != null) {
+            return lowerNode;
+        }
+
+        return root;
+    }
+
+    // find the node with the smallest value that larger than or equal to target
+    private TreeNode upperBound(TreeNode root, double target) {
+        if (root == null) {
+            return null;
+        }
+
+        if (root.val < target) {
+            return upperBound(root.right, target);
+        }
+
+        // root.val >= target
+        TreeNode upperNode = upperBound(root.left, target);
+        if (upperNode != null) {
+            return upperNode;
+        }
+
+        return root;
     }
 
     
