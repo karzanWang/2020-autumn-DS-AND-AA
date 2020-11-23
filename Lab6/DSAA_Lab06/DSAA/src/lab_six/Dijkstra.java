@@ -1,6 +1,8 @@
 package lab_six;
 
 
+import java.util.Arrays;
+
 public class Dijkstra {
     private final double[][] graph;
     private final int N;
@@ -35,6 +37,34 @@ public class Dijkstra {
         double max = Double.MAX_VALUE;
         
         // todo: complete code here
+        Arrays.fill(visit, false);
+        Arrays.fill(minDis,0);
+        visit[start]=true;
+        for(int k=0;k<N;k++) { //循环中每次确定一个新的确定最短路径的节点
+            double dmin=max;
+            int position=0;
+            //找出一个未标记的离出发点最近的节点
+            for(int i=0;i<N;i++) {
+                    if (!visit[i] && distance[start][i] < dmin&&i!=start) {
+                            dmin = distance[start][i];
+                            position = i;
+                    }
+            }
+            //标记该节点为已经访问过
+            visit[position]=true;
+            for(int i=0;i<N;i++) {
+                minDis = distance[start];
+                    if (distance[start][position] + distance[position][i] < distance[start][i]&&i!=position) {
+                        double temp = distance[start][position] + distance[position][i];
+                        distance[start][i] = temp;
+                        minDis[i] = temp;
+                        if (start!=i) {
+                            path[i] = path[position] + "-->" + i;
+                        }
+                    }
+            }
+        }
+        minDis[start]=0;
 
         String[] allShortest = new String[N];
         for (int i = 0; i < N; i++) {
